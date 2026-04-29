@@ -1,5 +1,5 @@
 # Bot Configuration
-BOT_TOKEN = "8490246461:AAGuL8uU2m0V83mD84-h-q_rN_q9_2e9-KY" # تم تعديل التوكن بناءً على المعطيات
+BOT_TOKEN = "8490246461:AAEr5SwwuOOyX4dJY2JM41f4HWae5IxQGjA"
 OWNER_ID = 8444942278
 
 # Cryptomus Configuration
