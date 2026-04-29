@@ -73,12 +73,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     balance = get_user_balance(user_id)
     text = f"🛒 *مرحباً بك في متجر Zstore*\n\n💰 رصيدك الحالي: `{balance:.2f}$`"
     keyboard = [
-        [InlineKeyboardButton("🛍️ تصفح المنتجات", callback_query_data='view_products')],
-        [InlineKeyboardButton("💳 شحن الرصيد", callback_query_data='deposit_menu')],
-        [InlineKeyboardButton("👤 حسابي", callback_query_data='my_account')]
+        [InlineKeyboardButton("🛍️ تصفح المنتجات", callback_data='view_products')],
+        [InlineKeyboardButton("💳 شحن الرصيد", callback_data='deposit_menu')],
+        [InlineKeyboardButton("👤 حسابي", callback_data='my_account')]
     ]
     if user_id == OWNER_ID:
-        keyboard.append([InlineKeyboardButton("⚙️ لوحة التحكم", callback_query_data='admin_panel')])
+        keyboard.append([InlineKeyboardButton("⚙️ لوحة التحكم", callback_data='admin_panel')])
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     if update.callback_query:
@@ -90,9 +90,9 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     keyboard = [
-        [InlineKeyboardButton("➕ إضافة منتج", callback_query_data='add_product')],
-        [InlineKeyboardButton("💵 شحن يدوي", callback_query_data='manual_deposit')],
-        [InlineKeyboardButton("🔙 العودة", callback_query_data='main_menu')]
+        [InlineKeyboardButton("➕ إضافة منتج", callback_data='add_product')],
+        [InlineKeyboardButton("💵 شحن يدوي", callback_data='manual_deposit')],
+        [InlineKeyboardButton("🔙 العودة", callback_data='main_menu')]
     ]
     await query.edit_message_text("🛠️ لوحة تحكم الأدمن:", reply_markup=InlineKeyboardMarkup(keyboard))
 
@@ -103,10 +103,10 @@ async def view_products(update: Update, context: ContextTypes.DEFAULT_TYPE):
     products = conn.execute('SELECT * FROM products').fetchall()
     conn.close()
     if not products:
-        await query.edit_message_text("❌ لا توجد منتجات حالياً.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 العودة", callback_query_data='main_menu')]]))
+        await query.edit_message_text("❌ لا توجد منتجات حالياً.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 العودة", callback_data='main_menu')]]))
         return
-    keyboard = [[InlineKeyboardButton(f"{p['name']} - {p['price']}$", callback_query_data=f"prod_{p['id']}")] for p in products]
-    keyboard.append([InlineKeyboardButton("🔙 العودة", callback_query_data='main_menu')])
+    keyboard = [[InlineKeyboardButton(f"{p['name']} - {p['price']}$", callback_data=f"prod_{p['id']}")] for p in products]
+    keyboard.append([InlineKeyboardButton("🔙 العودة", callback_data='main_menu')])
     await query.edit_message_text("📦 المنتجات المتوفرة:", reply_markup=InlineKeyboardMarkup(keyboard))
 
 async def product_details(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -118,8 +118,8 @@ async def product_details(update: Update, context: ContextTypes.DEFAULT_TYPE):
     conn.close()
     text = f"📦 *المنتج:* {p['name']}\n💰 *السعر:* {p['price']}$"
     keyboard = [
-        [InlineKeyboardButton("✅ شراء", callback_query_data=f"buy_{p['id']}")],
-        [InlineKeyboardButton("🔙 العودة", callback_query_data='view_products')]
+        [InlineKeyboardButton("✅ شراء", callback_data=f"buy_{p['id']}")],
+        [InlineKeyboardButton("🔙 العودة", callback_data='view_products')]
     ]
     await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
 
@@ -132,7 +132,7 @@ async def buy_product(update: Update, context: ContextTypes.DEFAULT_TYPE):
     p = conn.execute('SELECT * FROM products WHERE id = ?', (prod_id,)).fetchone()
     balance = get_user_balance(user_id)
     if balance < p['price']:
-        await query.edit_message_text("❌ رصيدك غير كافٍ!", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("💳 شحن", callback_query_data='deposit_menu')]]))
+        await query.edit_message_text("❌ رصيدك غير كافٍ!", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("💳 شحن", callback_data='deposit_menu')]]))
         return
     update_user_balance(user_id, -p['price'])
     await query.edit_message_text(f"✅ تم الشراء!\n\n📦 *{p['name']}*\n🔑 *المحتوى:* `{p['content']}`", parse_mode='Markdown')
@@ -141,9 +141,9 @@ async def deposit_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     keyboard = [
-        [InlineKeyboardButton("⚡ شحن تلقائي (Cryptomus)", callback_query_data='crypto_dep')],
+        [InlineKeyboardButton("⚡ شحن تلقائي (Cryptomus)", callback_data='crypto_dep')],
         [InlineKeyboardButton("👤 شحن يدوي (أدمن)", url=f"tg://user?id={OWNER_ID}")],
-        [InlineKeyboardButton("🔙 العودة", callback_query_data='main_menu')]
+        [InlineKeyboardButton("🔙 العودة", callback_data='main_menu')]
     ]
     await query.edit_message_text("💰 اختر طريقة الشحن:", reply_markup=InlineKeyboardMarkup(keyboard))
 
@@ -180,7 +180,7 @@ async def crypto_dep_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     res = create_invoice(amount, update.effective_user.id)
     if res and res.get('result'):
         pay_url = res['result']['url']
-        await update.message.reply_text(f"🔗 رابط الدفع: {pay_url}\nسيتم إضافة الرصيد بعد الدفع.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 العودة", callback_query_data='main_menu')]]))
+        await update.message.reply_text(f"🔗 رابط الدفع: {pay_url}\nسيتم إضافة الرصيد بعد الدفع.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 العودة", callback_data='main_menu')]]))
     else:
         await update.message.reply_text("❌ فشل إنشاء الفاتورة.")
     return ConversationHandler.END
